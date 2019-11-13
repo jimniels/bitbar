@@ -5,6 +5,7 @@ const path = require("path");
 const os = require("os");
 const NetlifyAPI = require("netlify");
 const recursive = require("recursive-readdir");
+const minimatch = require("minimatch"); // transitive dep of recursive-readdir
 const hasha = require("hasha");
 const isOnline = require("is-online");
 const isEqual = require("lodash.isequal");
@@ -13,6 +14,7 @@ const { getNetlifyOAuth, imgToBase64 } = require("../helpers.js");
 
 const netlify = new NetlifyAPI(getNetlifyOAuth());
 const SRC_DIR = path.resolve(os.homedir(), "Dropbox/cdn"); // ~/Dropbox/cdn
+const IGNORE_PATTERN = "{**/.*,**/_src/*}";
 const SITE_ID = "jimniels-cdn.netlify.com";
 const STATE_FILE = path.join(__dirname, ".state.json");
 
@@ -38,8 +40,8 @@ async function main() {
   if (!isEqual(newFileDigest, state.fileDigest)) {
     const newDeploy = await deploy();
     const newState = {
-      fileDigest: newFileDigest,
-      deploys: [newDeploy, ...state.deploys.slice(0, 5)]
+      deploys: [newDeploy, ...state.deploys.slice(0, 5)],
+      fileDigest: newFileDigest
     };
 
     fs.writeFileSync(STATE_FILE, JSON.stringify(newState));
@@ -99,7 +101,7 @@ function logDeploy(deploy, opts = {}) {
     duration,
     log,
     changes,
-    netlify: { admin_url, id },
+    netlify: { admin_url, id } = {},
     error
   } = deploy;
   const { isNested = false } = opts;
@@ -113,6 +115,11 @@ function logDeploy(deploy, opts = {}) {
       ` href=${admin_url}/deploys/${id}`
   );
 
+  if (error) {
+    console.log(error);
+    return;
+  }
+
   console.log(`${prefix}${changes} files in ${round(duration, 1)}s`);
 
   log.split("\n").forEach(item => {
@@ -120,10 +127,6 @@ function logDeploy(deploy, opts = {}) {
       console.log(prefix + item);
     }
   });
-
-  if (error) {
-    console.log(error);
-  }
 }
 
 /**
@@ -148,7 +151,7 @@ function getState() {
  * @returns {Digest}
  */
 async function getCurrentFileDigest() {
-  return recursive(SRC_DIR, [".DS_Store", "**/_src/*"]).then(files => {
+  return recursive(SRC_DIR, [IGNORE_PATTERN]).then(files => {
     return files.reduce(
       // file will be a full path
       //   `/Users/jimnielsen/Dropbox/cdn/my-file.jpg`
@@ -183,6 +186,7 @@ async function deploy() {
   return netlify
     .deploy(SITE_ID, SRC_DIR, {
       message: `Manual deploy from Netlify bitbar script`,
+      filter: filepath => filepath && !minimatch(filepath, IGNORE_PATTERN),
       statusCb: ev => {
         switch (ev.phase) {
           case "start": {
@@ -204,7 +208,9 @@ async function deploy() {
       netlify: site.deploy,
       changes: site.uploadList ? site.uploadList.length : 0
     }))
-    .catch(error => ({ error }))
+    .catch(error => ({
+      error: "Something went wrong \n" + error.stack + "\n" + error.message
+    }))
     .then(props => {
       const end = new Date() - start;
 

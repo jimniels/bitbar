@@ -12,12 +12,10 @@ function imgToBase64(imageFile) {
 }
 
 function getNetlifyOAuth() {
-  return fs.readFileSync(
-    path
-      .join(__dirname, "../.netlify-oauth.token")
-      .toString()
-      .trim()
-  );
+  return fs
+    .readFileSync(path.join(__dirname, "../.netlify-oauth.token"))
+    .toString()
+    .trim();
 }
 
 module.exports = {
