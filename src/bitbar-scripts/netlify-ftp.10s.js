@@ -115,18 +115,20 @@ function logDeploy(deploy, opts = {}) {
       ` href=${admin_url}/deploys/${id}`
   );
 
+  const logItem = item => {
+    if (item) {
+      console.log(prefix + item);
+    }
+  };
+
   if (error) {
-    console.log(error);
+    error.split("\n").forEach(logItem);
     return;
   }
 
   console.log(`${prefix}${changes} files in ${round(duration, 1)}s`);
 
-  log.split("\n").forEach(item => {
-    if (item) {
-      console.log(prefix + item);
-    }
-  });
+  log.split("\n").forEach(logItem);
 }
 
 /**
