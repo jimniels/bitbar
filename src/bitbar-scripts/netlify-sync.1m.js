@@ -259,9 +259,8 @@ function getDisplayTime(dateStr) {
 /**
  * @typedef {Object} State
  *
+ * @property {Array.<Deploy>} deploys
  * @property {FileDigest} fileDigest
- * @property {Array.<Deploy>}
- *
  */
 
 /**
@@ -269,8 +268,8 @@ function getDisplayTime(dateStr) {
  *
  * @property {string} datetime - takes shape as returned by `.toISOString()`
  * @property {string} log - fills in after the deploy is complete
- * @property {string} error - error message if deploy promise failed
  * @property {number} duration - time it took to run the deploy, in seconds
+ * @property {string} error - error message if deploy promise failed
  * @property {number} changes - number of files changed during the deploy
  * @property {NetlifyDeploy} netlify
  */
@@ -291,82 +290,3 @@ function getDisplayTime(dateStr) {
  * See Netlify API for complete shape reference
  * https://open-api.netlify.com/?_ga=2.124842243.805067671.1573168826-490942577.1573168826#operation/getDeploy
  */
-
-/*
-
-Example response of `site` after deploy
-
-{ deployId: '5dab6095be319fcdf09356b1',
-  deploy:
-   { id: '5dab6095be319fcdf09356b1',
-     site_id: 'd604cd05-0e2b-406a-9a98-0b1b5dc3f34e',
-     build_id: null,
-     state: 'ready',
-     name: 'jimniels-cdn',
-     url: 'https://cdn.jim-nielsen.com',
-     ssl_url: 'https://cdn.jim-nielsen.com',
-     admin_url: 'https://app.netlify.com/sites/jimniels-cdn',
-     deploy_url: 'http://5dab6095be319fcdf09356b1.jimniels-cdn.netlify.com',
-     deploy_ssl_url: 'https://5dab6095be319fcdf09356b1--jimniels-cdn.netlify.com',
-     created_at: '2019-10-19T19:14:29.010Z',
-     updated_at: '2019-10-19T19:14:29.908Z',
-     user_id: '5ab5d0fadf99534a3ecb05d7',
-     error_message: null,
-     required: [],
-     required_functions: [],
-     commit_ref: null,
-     review_id: null,
-     branch: null,
-     commit_url: null,
-     skipped: null,
-     locked: null,
-     log_access_attributes:
-      { type: 'firebase',
-        url:
-         'https://netlify-builds2.firebaseio.com/deploys/5dab6095be319fcdf09356b1/log',
-        endpoint: 'https://netlify-builds2.firebaseio.com',
-        path: '/deploys/5dab6095be319fcdf09356b1/log',
-        token: '0VPdBEVIpCELfwkwswXemwtSydJqaDDZxZZhN9fV' },
-     title:
-      'Manual deploy from Netlify script at 10/19/2019, 1:14:28 PM America/Denver',
-     review_url: null,
-     published_at: '2019-10-19T19:14:29.762Z',
-     context: 'production',
-     deploy_time: 0,
-     available_functions: [],
-     summary: { status: 'ready', messages: [Array] },
-     screenshot_url: null,
-     site_capabilities:
-      { title: 'Netlify Team Free',
-        asset_acceleration: true,
-        form_processing: true,
-        cdn_propagation: 'partial',
-        build_gc_exchange: 'buildbot-gc',
-        build_node_pool: 'buildbot-external-ssd',
-        domain_aliases: true,
-        secure_site: false,
-        prerendering: true,
-        proxying: true,
-        ssl: 'custom',
-        rate_cents: 0,
-        yearly_rate_cents: 0,
-        cdn_network: 'free_cdn_network',
-        ipv6_domain: 'cdn.makerloop.com',
-        branch_deploy: true,
-        managed_dns: true,
-        geo_ip: true,
-        split_testing: true,
-        id: 'nf_team_dev' },
-     committer: null,
-     skipped_log: null },
-  uploadList:
-   [ { root: '/Users/jimnielsen/Dropbox/cdn',
-       filepath: '/Users/jimnielsen/Dropbox/cdn/jordan-34.jpg',
-       stat: [Stats],
-       relname: 'jordan-34.jpg',
-       basename: 'jordan-34.jpg',
-       type: 'file',
-       hash: '235bdf83da6d870e2d7cff4e1f1a2ab846537e26',
-       assetType: 'file',
-       normalizedPath: 'jordan-34.jpg' } ] }
-*/
