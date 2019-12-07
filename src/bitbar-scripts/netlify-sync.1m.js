@@ -34,8 +34,8 @@ async function main() {
     return;
   }
 
-  // If the files on disk are the same as during the last deploy
-  // set our state to `needsDeploy` so on the next go around, we trigger a sync
+  // check if the files on disk are different from our last index
+  // if so, do a new deploy and save a new file index
   const newFileDigest = await getCurrentFileDigest();
   if (!isEqual(newFileDigest, state.fileDigest)) {
     const newDeploy = await deploy();
