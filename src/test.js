@@ -4,7 +4,7 @@ const os = require("os");
 const NetlifyAPI = require("netlify");
 const recursive = require("recursive-readdir");
 const hasha = require("hasha");
-const SRC_DIR = "/Users/jimnielsen/Sites/iosicongallery.com/img/";
+const SRC_DIR = "/Users/jimnielsen/Dropbox/cdn";
 const start = new Date();
 
 recursive(SRC_DIR, ["**/.*", "**/_src/*"])
