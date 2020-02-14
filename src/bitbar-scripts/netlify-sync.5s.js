@@ -28,57 +28,73 @@ try {
 async function main() {
   const state = getState();
 
-  // 1. If we're offline, just stop now. Don't bother trying to sync
-  if (!(await isOnline())) {
-    render({ status: "OFFLINE", deploys: state.deploys });
+  // Did we indicate we need a deploy?
+  // @TODO requires ~5 seconds before a deploy will even trigger
+  if (state.status === "NEEDS_DEPLOY") {
+    const newState = {
+      ...state,
+      status: "DEPLOYING"
+    };
+    fs.writeFileSync(STATE_FILE, JSON.stringify(newState));
+    render(newState);
     return;
   }
 
-  // check if the files on disk are different from our last index
-  // if so, do a new deploy and save a new file index
-  const newFileDigest = await getCurrentFileDigest();
-  if (!isEqual(newFileDigest, state.fileDigest)) {
+  // If we indicated that we are "deploying" then go the deploy
+  if (state.status === "DEPLOYING") {
     const newDeploy = await deploy();
     const newState = {
-      deploys: [newDeploy, ...state.deploys.slice(0, 5)],
-      fileDigest: newFileDigest
+      status: "IDLE",
+      deploys: [newDeploy, ...state.deploys.slice(0, 5)]
     };
 
     fs.writeFileSync(STATE_FILE, JSON.stringify(newState));
-    render({ status: "SYNCED", deploys: newState.deploys });
+    render(newState);
     return;
   }
 
-  render({ status: "IDLE", deploys: state.deploys });
+  render(state);
   return;
 }
 
 /**
  * Render out the string expected by bitbar.
  * Should be pure. No side effects. Same inputs, same outputs.
- * @param {Array.<Deploy>} deploys
- * @param {status} string - @TODO enum
+ * @param {State}
  */
 function render({ deploys, status }) {
+  // Icon
   let icon = `|templateImage=`;
-  if (status === "OFFLINE") {
-    icon += imgToBase64("netlify-sync-offline.png");
-  } else if (status === "SYNCED") {
-    icon += imgToBase64("netlify-sync-success.png");
+  if (status === "NEEDS_DEPLOY" || status === "DEPLOYING") {
+    icon += imgToBase64("netlify-sync-in-progress.png");
   } else {
     icon += imgToBase64("netlify-sync.png");
   }
   console.log(icon);
   console.log("---");
 
-  if (status === "OFFLINE") {
-    // @TODO check if files are out of sync and that we need a deploy but
-    // can't do one
-    console.log("No internet connection");
-    console.log("Syncing disabled");
-    console.log("---");
+  // Deploy/Deploying...
+  if (status === "DEPLOYING") {
+    // prettier-ignore
+    console.log([
+      "Deploy in progress... |",
+      `image=${imgToBase64("status-yellow.png")}`,
+      "href=https://app.netlify.com/sites/jimniels-cdn/deploys"
+    ].join(" "));
+  } else {
+    const file = path.join(__dirname, ".netlify-sync-trigger-deploy.js");
+    console.log(
+      [
+        "⚡️ DEPLOY ⚡️ |",
+        "color=#c58a00",
+        "terminal=false",
+        `bash=/usr/local/bin/node param1=${file}`
+      ].join(" ")
+    );
   }
+  console.log("---");
 
+  // Deploy log
   if (deploys.length > 0) {
     const [latestDeploy, ...otherDeploys] = deploys;
     logDeploy(latestDeploy);
@@ -90,7 +106,6 @@ function render({ deploys, status }) {
   }
 
   console.log("---");
-  console.log("Refresh Script | refresh=true");
   console.log(
     `Reset State | terminal=false bash=/bin/rm param1=-f param2=${STATE_FILE}`
   );
@@ -108,11 +123,13 @@ function logDeploy(deploy, opts = {}) {
   const prefix = isNested ? "-- " : "";
 
   console.log(
-    getDisplayTime(deploy.datetime) +
-      "|" +
-      " image=" +
-      imgToBase64(deploy.error ? "status-red.png" : "status-green.png") +
-      ` href=${admin_url}/deploys/${id}`
+    [
+      `${getDisplayTime(deploy.datetime)}|`,
+      `image=${imgToBase64(
+        deploy.error ? "status-red.png" : "status-green.png"
+      )}`,
+      `href=${admin_url}/deploys/${id}`
+    ].join(" ")
   );
 
   const logItem = item => {
@@ -141,37 +158,11 @@ function getState() {
   }
 
   const initialState = {
-    deploys: [],
-    fileDigest: {}
+    status: "NEEDS_DEPLOY",
+    deploys: []
   };
   fs.writeFileSync(STATE_FILE, JSON.stringify(initialState));
   return initialState;
-}
-
-/**
- * Get a digest of file paths and SHA1's of the content for the given directory
- * @returns {Digest}
- */
-async function getCurrentFileDigest() {
-  return recursive(SRC_DIR, [IGNORE_PATTERN]).then(files => {
-    return files.reduce(
-      // file will be a full path
-      //   `/Users/jimnielsen/Dropbox/cdn/my-file.jpg`
-      // so we trim it down to the local because that's what netlify api has
-      //   `/my-file.jpg`
-      (acc, file) => {
-        const sha = hasha(fs.readFileSync(file), {
-          algorithm: "sha1"
-        });
-        const shortFilePath = file.replace(SRC_DIR, "");
-        return {
-          ...acc,
-          [shortFilePath]: sha
-        };
-      },
-      {}
-    );
-  });
 }
 
 /**
@@ -211,6 +202,11 @@ async function deploy() {
       changes: site.uploadList ? site.uploadList.length : 0
     }))
     .catch(error => ({
+      // @TODO catch if it's offline?
+      // if (!(await isOnline())) {
+      //   render({ status: "OFFLINE", deploys: state.deploys });
+      //   return;
+      // }
       error: "Something went wrong \n" + error.stack + "\n" + error.message
     }))
     .then(props => {
@@ -260,7 +256,7 @@ function getDisplayTime(dateStr) {
  * @typedef {Object} State
  *
  * @property {Array.<Deploy>} deploys
- * @property {FileDigest} fileDigest
+ * @property {"IDLE"|"NEEDS_DEPLOY"|"DEPLOYING"} status
  */
 
 /**
@@ -272,12 +268,6 @@ function getDisplayTime(dateStr) {
  * @property {string} error - error message if deploy promise failed
  * @property {number} changes - number of files changed during the deploy
  * @property {NetlifyDeploy} netlify
- */
-
-/**
- * @typedef {Object.<string, string>} FileDigest
- * An object with key/value mappings of file paths to sha1's of the file's contents
- * i.e. { "/path/to/file": "abc123def455", ... }
  */
 
 /**
