@@ -4,19 +4,18 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const NetlifyAPI = require("netlify");
-const recursive = require("recursive-readdir");
 const minimatch = require("minimatch"); // transitive dep of recursive-readdir
-const hasha = require("hasha");
-const isOnline = require("is-online");
-const isEqual = require("lodash.isequal");
 const capitalize = require("lodash.capitalize");
 const { getNetlifyOAuth, imgToBase64 } = require("../helpers.js");
-
 const netlify = new NetlifyAPI(getNetlifyOAuth());
 const SRC_DIR = path.resolve(os.homedir(), "Dropbox/cdn"); // ~/Dropbox/cdn
 const IGNORE_PATTERN = "{**/.*,**/_src/*}";
 const SITE_ID = "jimniels-cdn.netlify.com";
 const STATE_FILE = path.join(__dirname, ".state.json");
+
+module.exports = {
+  STATE_FILE
+};
 
 try {
   main();
