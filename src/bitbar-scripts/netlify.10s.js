@@ -9,14 +9,14 @@ const { imgToBase64, getNetlifyOAuth } = require("../helpers.js");
 fetchNetlify("sites")
   // Then fetch the build for each of your sites and append the latest build
   // info into what netlify returns
-  .then(sites => {
+  .then((sites) => {
     return Promise.all(
-      sites.map(site =>
-        fetchNetlify(`sites/${site.site_id}/builds`).then(builds => ({
+      sites.map((site) =>
+        fetchNetlify(`sites/${site.site_id}/builds`).then((builds) => ({
           ...site,
           ...(builds && builds[0] && builds[0].id
             ? { __latestBuild__: builds[0] }
-            : {})
+            : {}),
         }))
       )
     );
@@ -43,7 +43,7 @@ fetchNetlify("sites")
       }
     ]
   */
-  .then(sites => {
+  .then((sites) => {
     // Group the data how i'd like to see it output
     const sitesByDomain = sites.reduce((acc, site) => {
       // All my domain URLs will come in 3 pieces: subdomain.domain.com
@@ -56,8 +56,8 @@ fetchNetlify("sites")
       if (hostname.includes("jim-nielsen.com")) {
         domain = "jim-nielsen.com";
         label = hostnamePieces[0];
-      } else if (hostname.includes("netlify.com")) {
-        domain = "netlify.com";
+      } else if (hostname.includes("netlify.app")) {
+        domain = "netlify.app";
         label = hostnamePieces[0];
       } else if (hostname.includes("icongallery.com")) {
         domain = "icongalleries";
@@ -75,12 +75,12 @@ fetchNetlify("sites")
     }, {});
 
     let log = "";
-    const addToLog = str => (log = log + str + "\n");
+    const addToLog = (str) => (log = log + str + "\n");
     let notifications = 0;
 
     Object.keys(sitesByDomain)
       .sort()
-      .forEach(domain => {
+      .forEach((domain) => {
         addToLog(domain);
 
         sitesByDomain[domain].forEach(({ label, site }) => {
@@ -106,7 +106,7 @@ fetchNetlify("sites")
     logMenubar(notifications);
     console.log(log);
   })
-  .catch(e => {
+  .catch((e) => {
     logMenubar();
     console.log("Whoops, caught an error.");
     console.log(e);
@@ -131,10 +131,10 @@ function fetchNetlify(path) {
   return new Promise((resolve, reject) => {
     const uri = `https://api.netlify.com/api/v1/${path}/?access_token=${TOKEN}`;
     https
-      .get(uri, res => {
+      .get(uri, (res) => {
         let data = "";
         // A chunk of data has been recieved.
-        res.on("data", chunk => {
+        res.on("data", (chunk) => {
           data += chunk;
         });
         // The whole response has been received. Resolve it.
@@ -142,7 +142,7 @@ function fetchNetlify(path) {
           resolve(JSON.parse(data));
         });
       })
-      .on("error", err => {
+      .on("error", (err) => {
         reject("Error: " + err.message);
       });
   });
