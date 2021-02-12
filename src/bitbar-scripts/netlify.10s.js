@@ -87,11 +87,16 @@ fetchNetlify("sites")
           let img = imgToBase64("status-clear.png");
           if (site.__latestBuild__) {
             const { done, error } = site.__latestBuild__;
-            if (error) {
-              notifications += 1;
-              img = imgToBase64("status-red.png"); // error
+
+            if (done && error) {
+              // Check for done first because it can be done, but also an error
+              // meaning the build cancelled
+              img = imgToBase64("status-green-red.png");
             } else if (done) {
               img = imgToBase64("status-green.png"); // done
+            } else if (error) {
+              notifications += 1;
+              img = imgToBase64("status-red.png"); // error
             } else {
               notifications += 1;
               img = imgToBase64("status-yellow.png"); // building
