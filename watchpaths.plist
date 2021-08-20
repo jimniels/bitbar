@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+     <key>Label</key>
+     <string>MyAgent</string>
+     <key>ProgramArguments</key>
+     <array>
+          <!-- <string>/Users/jimnielsen/Sites/bitbar/notice.sh</string> -->
+          <string>/usr/local/bin/node</string>
+          <string>/Users/jimnielsen/Sites/bitbar/src/bitbar-scripts/.netlify-sync-trigger-deploy.js</string>
+     </array>
+     <key>WatchPaths</key>
+     <array>
+           <string>/Users/jimnielsen/Dropbox/cdn/</string>
+     </array>
+     <key>ThrottleInterval</key>
+     <integer>20</integer>
+</dict>
+</plist>
